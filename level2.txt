@@ -1,0 +1,179 @@
+The makers of the "Devotion Shift" wand have decided to reduce its
+price since no one is showing interest in their luxury wand.
+
+Write the command to update the wand with a name of "Devotion Shift"
+and set the price to 5.99.
+
+db.wands.update(
+  {"name":"Devotion Shift"},
+  {"$set": {"price":5.99}}   
+)
+
+The Grand House of Magic recently passed a law that all wands
+with "Fire" in their list of powers must increase their level_required 
+field by 2. We need to update all wands that have been affected 
+by the new law.
+
+First, let's add the query parameter to find all wands that include "Fire" in their powers.
+db.wands.update(
+  {"powers": "Fire"}
+)
+Great! Now add an update parameter to increment the level_required by 2.
+db.wands.update(
+  {"powers": "Fire"},
+  {"$inc": {"level_required": 2}}
+)   
+
+Now that we have a working update command, change it so that the 
+update will apply to all documents that match the query.
+
+db.wands.update(
+  {"powers": "Fire"},
+  {"$inc": {"level_required": 2}},
+  {"multi": true}
+)
+WriteResult({ "nMatched" : 3, "nUpserted" : 0, "nModified" : 3 })
+
+UPDATING LOGS
+
+We'd like to see which wands users are looking at most. To do
+this, we'll use the logs collection that contains documents that 
+record the name and count for each wand.
+First, let's add the query parameter to find a wand with the name
+of "Dream Bender"
+db.logs.update(
+  {"name": "Dream Bender"}
+)
+
+Great! Now add the update parameter to increment the count field
+by 1.
+
+db.logs.update(
+  {"name": "Dream Bender"},
+  {"$inc": {"count": 1}},
+  {"upsert": true}
+)
+
+ADVANCED MODIFICATIONS
+A few of the old wands included a smell field, and we're not
+exactly sure why anyone thought that would be a relevant field.
+Let's get rid of it!
+
+Add the update parameter that will remove the smell field from
+all documents.
+db.wands.update(
+  {},
+  {"$unset":{"smell":" "}},
+  {"multi": true}
+)
+
+We've been getting some complaints from wand makers that the 
+term "creator" doesn't properly convey the true nature of their
+craft. To make them happy, we need to change the field creator to
+maker.
+
+Add the update parameter that will rename the creator field to 
+"maker" for all documents.
+
+db.wands.update(
+  {},
+  {"$rename": {"creator": "maker"}},
+  {"multi": true}
+)
+
+Array Alterations I 
+
+We want to be the go-to source for wand information. Currently,
+we are listing one-word powers for each wand, but we should
+probably start being more specific. Here's the document we'll
+be working with:
+
+{
+  "_id": ObjectId("56016414959123c11810f9ad"),
+  "name": "Dream Bender",
+  "creator": "Foxmond",
+  "level_required": 10,
+  "price": 34.9,
+  "powers": ["Fire", "Love"],
+  "damage": {"magic": 4, "melee": 2}
+}
+
+For the wand above, let's add the update parameter to set the value of 
+"Fire" to "Fire Deflection" in the powers array.
+
+Remember that we only want to update a single array value, not 
+all of the values in the array.
+
+db.wands.update(
+  {"name": "Dream Bender"},
+  {"$set": {"powers.0": "Fire Deflection"}}
+)
+
+Array Alterations II 
+We know that there are a lot of wands with the power of "Love",
+but the correct power is actually named "Love Burst". We'll
+need to update all wands that contain this power.
+
+Add the update parameter using the positional operator to change
+the value of "Love" to "Love Burst".
+
+db.wands.update(
+  {"powers": "Love"},
+  {"$set":{"powers.$":"Love Burst"}},
+  {"multi": true}
+)
+
+Array Alterations III 
+While some people may know that wands can cast spells, others
+may think they're just fancy sticks. Let's add "Spell Casting"
+to the list of powers for the "Dream Bender" wand.
+
+Add the update parameter that will add "Spell Casting" to the
+end of the powers array for this wand.
+db.wands.update(
+  {"name": "Dream Bender"},
+  {"$push": {"powers": "Spell Casting"}}
+)
+
+Array Alterations IV 
+Let's go ahead and add "Spell Casting" to every wand's powers
+array, but only if that power doesn't already exist.
+
+db.wands.update(
+  {},
+  {"$addToSet":{"powers":"Spell Casting"}},
+  {"multi": true}
+)
+
+STATS
+People are getting confused by the damage stats for each wand.
+We've been basing damage on a scale of 1-10, but we should be
+using a scale of 1-100. We've gone ahead and updated 
+"damage.magic" by multiplying the original value by 10 for
+all the documents. Here's an example:
+
+{ ...
+  "damage": {"magic": 4, "melee": 2}
+}
+This document was updated to:
+{ ...
+  "damage": {"magic": 40, "melee": 2}
+}
+
+Check out the MongoDB documentation to learn how to use the
+$mul operator, and then use it multiply the value of "damage.melee"
+by 10 for all documents.
+
+db.wands.update(
+  {},
+  {"$mul":{"damage.melee":10}},
+  {multi: true}
+)
+
+
+
+
+
+                 
+                 
+                 
